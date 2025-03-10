@@ -12,6 +12,7 @@ export const CustomGoogleMap = () => {
   const [showDetails, setShowDetails] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   // Group venues by floor for better organization
   const getVenuesByDepartmentAndFloor = (departmentName) => {
@@ -31,6 +32,7 @@ export const CustomGoogleMap = () => {
     return groupedByFloor;
   };
 
+  // Remove userLocation from dependency array to prevent reinitializing
   useEffect(() => {
     const initMap = () => {
       // Campus boundary coordinates
@@ -109,37 +111,36 @@ export const CustomGoogleMap = () => {
 
       mapInstanceRef.current = map;
 
-      // Add current location marker
+      // Add initial current location marker
       if (navigator.geolocation) {
+        const locationMarker = new window.google.maps.Marker({
+          map: map,
+          title: 'You are here',
+          icon: {
+            path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 8,
+            fillColor: '#4285F4',
+            fillOpacity: 1,
+            strokeColor: '#FFFFFF',
+            strokeWeight: 2,
+            rotation: 0
+          },
+          zIndex: 9999,
+          optimized: false
+        });
+        currentLocationMarkerRef.current = locationMarker;
+
+        // Get initial position and start watching
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const pos = {
               lat: position.coords.latitude,
               lng: position.coords.longitude
             };
-
-            // Create blue arrow marker for current location
-            const locationMarker = new window.google.maps.Marker({
-              position: pos,
-              map: map,
-              title: 'You are here',
-              icon: {
-                path: window.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                scale: 8,
-                fillColor: '#4285F4',
-                fillOpacity: 1,
-                strokeColor: '#FFFFFF',
-                strokeWeight: 2,
-                rotation: position.coords.heading || 0
-              },
-              zIndex: 9999,
-              optimized: false
-            });
-            currentLocationMarkerRef.current = locationMarker;
-
-            // Center map on current location
+            locationMarker.setPosition(pos);
             map.setCenter(pos);
-            map.setZoom(15);
+            map.setZoom(18);
+            setUserLocation(pos);
 
             // Watch for location updates
             navigator.geolocation.watchPosition(
@@ -149,6 +150,9 @@ export const CustomGoogleMap = () => {
                   lng: newPosition.coords.longitude
                 };
                 locationMarker.setPosition(newPos);
+                setUserLocation(newPos);
+
+                // Update arrow rotation if heading is available
                 if (newPosition.coords.heading !== null) {
                   const icon = locationMarker.getIcon();
                   icon.rotation = newPosition.coords.heading;
@@ -156,16 +160,18 @@ export const CustomGoogleMap = () => {
                 }
               },
               null,
-              { enableHighAccuracy: true }
+              { 
+                enableHighAccuracy: true,
+                maximumAge: 0
+              }
             );
           },
           (error) => {
-            console.error('Location error:', error);
-            alert('Please enable location access to see your position on the map');
+            console.error('Error getting location:', error);
+            alert('Please enable location services to see your position');
           },
           {
             enableHighAccuracy: true,
-            timeout: 15000,
             maximumAge: 0
           }
         );
@@ -331,91 +337,63 @@ export const CustomGoogleMap = () => {
         });
       });
 
-      // Function to show route with real-time updates - modified to not scroll for non-academic categories
-      window.showRoute = (destLat, destLng) => {
-        // Close all info windows first
+      // Function to show route with real-time updates
+      window.showRoute = async (destLat, destLng) => {
         closeAllInfoWindows();
         
-        // Get campus center coordinates for fallback
-        const campusCenter = {
-          lat: (Math.max(...boundaryCoords.map(c => c.lat)) + Math.min(...boundaryCoords.map(c => c.lat))) / 2,
-          lng: (Math.max(...boundaryCoords.map(c => c.lng)) + Math.min(...boundaryCoords.map(c => c.lng))) / 2
-        };
-        
-        // Define campus radius (approximate)
-        const campusRadius = 0.003; // roughly 300 meters
-        
-        // Check if user location is available
-        if (!userLocation) {
-          // Use campus center as fallback without showing an error alert
+        if (!navigator.geolocation) {
+          alert("Geolocation is not supported by your browser");
+          return;
+        }
+      
+        setIsGettingLocation(true);
+      
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              maximumAge: 0
+            });
+          });
+      
+          const currentLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+      
           const directionsService = new window.google.maps.DirectionsService();
           const destination = { lat: destLat, lng: destLng };
-          
+      
           directionsService.route({
-            origin: campusCenter,
+            origin: currentLocation,
             destination: destination,
             travelMode: 'WALKING'
           }, (response, status) => {
             if (status === 'OK' && directionsRendererRef.current) {
               directionsRendererRef.current.setDirections(response);
               
-              // Find the department associated with this destination
               const targetDept = departments.find(dept => 
                 Math.abs(dept.position.lat - destLat) < 0.0001 && 
                 Math.abs(dept.position.lng - destLng) < 0.0001
               );
               
-              // Only set selected department but don't scroll for Show Path
               if (targetDept) {
                 setSelectedDepartment(targetDept);
-                // Only show details for academic buildings but don't scroll
                 if (targetDept.category === 'academic') {
                   setShowDetails(true);
                 }
               }
             } else {
               console.error('Directions request failed due to ' + status);
+              alert('Unable to calculate route. Please try again.');
             }
+            setIsGettingLocation(false);
           });
-          return;
+        } catch (error) {
+          console.error('Error getting location:', error);
+          alert('Please enable location access and try again');
+          setIsGettingLocation(false);
         }
-        
-        // Check if user is inside campus radius
-        const isInsideCampus = Math.sqrt(
-          Math.pow(userLocation.lat - campusCenter.lat, 2) + 
-          Math.pow(userLocation.lng - campusCenter.lng, 2)
-        ) <= campusRadius;
-        
-        const directionsService = new window.google.maps.DirectionsService();
-        const destination = { lat: destLat, lng: destLng };
-        
-        // Use the Directions API to render the path
-        directionsService.route({
-          origin: isInsideCampus ? userLocation : campusCenter,
-          destination: destination,
-          travelMode: 'WALKING'
-        }, (response, status) => {
-          if (status === 'OK' && directionsRendererRef.current) {
-            directionsRendererRef.current.setDirections(response);
-            
-            // Find the department associated with this destination
-            const targetDept = departments.find(dept => 
-              Math.abs(dept.position.lat - destLat) < 0.0001 && 
-              Math.abs(dept.position.lng - destLng) < 0.0001
-            );
-            
-            // Only set selected department but don't scroll for Show Path
-            if (targetDept) {
-              setSelectedDepartment(targetDept);
-              // Only show details for academic buildings but don't scroll
-              if (targetDept.category === 'academic') {
-                setShowDetails(true);
-              }
-            }
-          } else {
-            console.error('Directions request failed due to ' + status);
-          }
-        });
       };
 
       // Function to show details
@@ -489,33 +467,59 @@ export const CustomGoogleMap = () => {
           (error) => console.error('Error watching position:', error),
           {
             enableHighAccuracy: true,
-            maximumAge: 0,
-            timeout: 10000
+            maximumAge: 0
           }
         );
       }
     };
+
+    let watchId; // Store the watch position ID for cleanup
 
     // Load Google Maps
     if (!window.google) {
       const script = document.createElement('script');
       script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyA25G33CgnTSorkzsS39vJtmE6T3gRQ-bw';
       script.async = true;
-      script.onload = initMap;
+      script.onload = () => {
+        initMap();
+        // Store the watch ID when starting location watching
+        if (navigator.geolocation) {
+          watchId = navigator.geolocation.watchPosition(
+            // ...existing watchPosition callback...
+          );
+        }
+      };
       document.head.appendChild(script);
     } else {
       initMap();
+      // Store the watch ID when starting location watching
+      if (navigator.geolocation) {
+        watchId = navigator.geolocation.watchPosition(
+          // ...existing watchPosition callback...
+        );
+      }
     }
 
-    // Cleanup function
+    // Enhanced cleanup function
     return () => {
       if (window.google && mapInstanceRef.current) {
         window.google.maps.event.clearInstanceListeners(mapInstanceRef.current);
       }
+      // Clear the location watcher
+      if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+      // Clean up markers
+      if (currentLocationMarkerRef.current) {
+        currentLocationMarkerRef.current.setMap(null);
+      }
+      if (directionsRendererRef.current) {
+        directionsRendererRef.current.setMap(null);
+      }
       delete window.showRoute;
       delete window.showDetails;
     };
-  }, [userLocation]);
+  }, []); // Empty dependency array - run only once on mount
 
   // Enhanced "Move to Current Location" button with better performance
   const handleMoveToCurrentLocation = () => {
@@ -561,7 +565,6 @@ export const CustomGoogleMap = () => {
         },
         {
           enableHighAccuracy: true,
-          timeout: 15000,
           maximumAge: 0
         }
       );

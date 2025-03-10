@@ -1,0 +1,49 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.app-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.map-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  position: relative;
+}
+
+@media screen and (max-width: 768px) {
+  .map-wrapper {
+    padding: 0;
+  }
+  
+  .map-container {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .app-container {
+    height: 100vh;
+  }
+}

@@ -13,6 +13,7 @@ export const CustomGoogleMap = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Group venues by floor for better organization
   const getVenuesByDepartmentAndFloor = (departmentName) => {
@@ -201,19 +202,19 @@ export const CustomGoogleMap = () => {
             };
           case 'hostel':
             return {
-              url: `Hostel.jpg`,
-              scaledSize: new window.google.maps.Size(40, 40),
+              url: `hostel1.png`,
+              scaledSize: new window.google.maps.Size(45, 45),
               labelOrigin: new window.google.maps.Point(15, -10)
             };
           case 'facility':
             return {
-              url: `Library.jpg`,
+              url: `library.png`,
               scaledSize: new window.google.maps.Size(40, 40),
               labelOrigin: new window.google.maps.Point(15, -10)
             };
           case 'entrance':
             return {
-              url: `Entry.png`,
+              url: `entry.png`,
               scaledSize: new window.google.maps.Size(40, 40),
               labelOrigin: new window.google.maps.Point(15, -10)
             };
@@ -340,13 +341,13 @@ export const CustomGoogleMap = () => {
       // Function to show route with real-time updates
       window.showRoute = async (destLat, destLng) => {
         closeAllInfoWindows();
+        setIsLoading(true); // Show loading spinner
         
         if (!navigator.geolocation) {
+          setIsLoading(false);
           alert("Geolocation is not supported by your browser");
           return;
         }
-      
-        setIsGettingLocation(true);
       
         try {
           const position = await new Promise((resolve, reject) => {
@@ -369,6 +370,7 @@ export const CustomGoogleMap = () => {
             destination: destination,
             travelMode: 'WALKING'
           }, (response, status) => {
+            setIsLoading(false); // Hide loading spinner
             if (status === 'OK' && directionsRendererRef.current) {
               directionsRendererRef.current.setDirections(response);
               
@@ -390,6 +392,7 @@ export const CustomGoogleMap = () => {
             setIsGettingLocation(false);
           });
         } catch (error) {
+          setIsLoading(false); // Hide loading spinner on error
           console.error('Error getting location:', error);
           alert('Please enable location access and try again');
           setIsGettingLocation(false);
@@ -453,15 +456,6 @@ export const CustomGoogleMap = () => {
               setInitialLocationSet(true);
               mapInstanceRef.current.setCenter(pos);
               mapInstanceRef.current.setZoom(15);
-            }
-
-            // If there's an active directions request, update it
-            if (directionsRendererRef.current && directionsRendererRef.current.getDirections()) {
-              const currentRoute = directionsRendererRef.current.getDirections();
-              if (currentRoute) {
-                const destination = currentRoute.routes[0].legs[0].end_location;
-                window.showRoute(destination.lat(), destination.lng());
-              }
             }
           },
           (error) => console.error('Error watching position:', error),
@@ -588,20 +582,30 @@ export const CustomGoogleMap = () => {
     }}>
       <h2 className="text-2xl font-bold my-2 text-white text-center">NEC Campus Compass</h2>
       
-      {/* Map container with Tailwind CSS for better mobile centering */}
+      {/* Map container with synchronized loader */}
       <div className="w-full flex justify-center items-center px-4 sm:px-0"> 
-        <div 
-          ref={mapRef} 
-          className="w-full h-[80vw] max-w-[500px] max-h-[500px] relative m-auto mb-2"
-          style={{ 
-            borderRadius: '0',
-            padding: '0',
-            animation: 'pulse 2s infinite'
-          }} 
-        />
+        <div className="relative w-full max-w-[500px]">
+          <div 
+            ref={mapRef} 
+            className="w-full h-[80vw] max-w-[500px] max-h-[500px] relative m-auto mb-2"
+            style={{ 
+              borderRadius: '0',
+              padding: '0',
+              animation: isLoading ? 'none' : 'pulse 2s infinite',
+            }} 
+          />
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-purple-900/40 backdrop-blur-sm animate-breath">
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                <p className="mt-2 text-white text-sm font-medium animate-pulse">Finding path...</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-      
-      {/* Animation styles with improved media queries */}
+        
+        {/* Animation styles with improved media queries */}
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
@@ -674,6 +678,25 @@ export const CustomGoogleMap = () => {
               padding: 0.5rem !important;
               margin-top: 0.25rem !important;
             }
+          }
+
+          @keyframes spin {
+            from {
+              transform: rotate(0deg);
+            }
+            to {
+              transform: rotate(360deg);
+            }
+          }
+
+          @keyframes breath {
+            0% { opacity: 0.6; backdrop-filter: blur(2px); }
+            50% { opacity: 0.8; backdrop-filter: blur(4px); }
+            100% { opacity: 0.6; backdrop-filter: blur(2px); }
+          }
+
+          .animate-breath {
+            animation: breath 2s ease-in-out infinite;
           }
         `}
       </style>
@@ -777,7 +800,7 @@ export const CustomGoogleMap = () => {
                           {venue.name.toLowerCase().includes('lab') ? 'Laboratory' :
                            venue.name.toLowerCase().includes('hall') ? 'Hall' :
                            venue.name.toLowerCase().includes('classroom') ? 'Classroom' :
-                           'Room'}
+                           'Classroom'}
                         </td>
                       </tr>
                     ))}

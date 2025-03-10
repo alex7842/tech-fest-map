@@ -3,7 +3,7 @@ import { CustomGoogleMap } from "./CustomGoogleMap.jsx";
 
 function App() {
   return (
-      <CustomGoogleMap zoom={15}/>
+      <CustomGoogleMap zoom={10}/>
   );
 }
 

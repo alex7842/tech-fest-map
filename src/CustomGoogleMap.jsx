@@ -58,7 +58,7 @@ export const CustomGoogleMap = () => {
       // Create the map with updated options
       const map = new window.google.maps.Map(mapContainer, {
         center: center,
-        zoom: 20,
+        zoom: 15,
         mapTypeId: 'satellite',
         fullscreenControl: false,
         streetViewControl: false,
@@ -137,7 +137,7 @@ export const CustomGoogleMap = () => {
 
             // Center map on current location
             map.setCenter(pos);
-            map.setZoom(19);
+            map.setZoom(15);
 
             // Watch for location updates
             navigator.geolocation.watchPosition(
@@ -564,7 +564,7 @@ export const CustomGoogleMap = () => {
             if (!initialLocationSet) {
               setInitialLocationSet(true);
               mapInstanceRef.current.setCenter(pos);
-              mapInstanceRef.current.setZoom(19);
+              mapInstanceRef.current.setZoom(15);
             }
 
             // If there's an active directions request, update it
@@ -642,7 +642,7 @@ export const CustomGoogleMap = () => {
 
           if (mapInstanceRef.current) {
             mapInstanceRef.current.setCenter(pos);
-            mapInstanceRef.current.setZoom(19);
+            mapInstanceRef.current.setZoom(15);
           }
         },
         (error) => {

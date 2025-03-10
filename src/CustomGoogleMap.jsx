@@ -472,10 +472,10 @@ export const CustomGoogleMap = () => {
     // Load Google Maps
     if (!window.google) {
       const script = document.createElement('script');
-      script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyA25G33CgnTSorkzsS39vJtmE6T3gRQ-bw';
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
       script.async = true;
       script.onload = () => {
-        initMap();
+initMap();
         // Store the watch ID when starting location watching
         if (navigator.geolocation) {
           watchId = navigator.geolocation.watchPosition(
@@ -485,8 +485,14 @@ export const CustomGoogleMap = () => {
       };
       document.head.appendChild(script);
     } else {
-      initMap();
-      // Store the watch ID when starting location watching
+      ini// Store the watch ID when starting location watching
+      if (navigator.geolocation) {
+        watchId = navigator.geolocation.watchPosition(
+          // ...existing watchPosition callback...
+        );
+      }
+tMap();
+// Store the watch ID when starting location watching
       if (navigator.geolocation) {
         watchId = navigator.geolocation.watchPosition(
           // ...existing watchPosition callback...

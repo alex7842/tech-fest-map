@@ -239,7 +239,8 @@ export const CustomGoogleMap = () => {
           if (name.includes('Mechanical')) return 'MECH';
           if (name.includes('Civil')) return 'CIVIL';
         } else if (category === 'hostel') {
-          if (name.includes('BOYS')) return 'Boys Hostel';
+          if (name.includes('Boys Hostel 1')) return 'Boys Hostel 1';
+          if(name.includes('Boys Hostel 2')) return 'Boys Hostel 2';
           if (name.includes('Girls')) return 'Girls Hostel';
         } else if (category === 'facility') {
           return 'Library';
@@ -451,7 +452,8 @@ export const CustomGoogleMap = () => {
               currentLocationMarkerRef.current.setPosition(pos);
             }
 
-            // Set initial location flag only once
+            // Remove the auto-centering logic
+            // Only set center once when location is first obtained
             if (!initialLocationSet) {
               setInitialLocationSet(true);
               mapInstanceRef.current.setCenter(pos);
@@ -467,59 +469,33 @@ export const CustomGoogleMap = () => {
       }
     };
 
-    let watchId; // Store the watch position ID for cleanup
-
-    // Load Google Maps
+    // Simplified script loading and map initialization
     if (!window.google) {
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
       script.async = true;
-      script.onload = () => {
-initMap();
-        // Store the watch ID when starting location watching
-        if (navigator.geolocation) {
-          watchId = navigator.geolocation.watchPosition(
-            // ...existing watchPosition callback...
-          );
-        }
-      };
+      script.onload = initMap;
       document.head.appendChild(script);
     } else {
-      ini// Store the watch ID when starting location watching
-      if (navigator.geolocation) {
-        watchId = navigator.geolocation.watchPosition(
-          // ...existing watchPosition callback...
-        );
-      }
-tMap();
-// Store the watch ID when starting location watching
-      if (navigator.geolocation) {
-        watchId = navigator.geolocation.watchPosition(
-          // ...existing watchPosition callback...
-        );
-      }
+      initMap();
     }
 
-    // Enhanced cleanup function
+    // Clean up function
     return () => {
       if (window.google && mapInstanceRef.current) {
         window.google.maps.event.clearInstanceListeners(mapInstanceRef.current);
       }
-      // Clear the location watcher
-      if (watchId) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-      // Clean up markers
       if (currentLocationMarkerRef.current) {
         currentLocationMarkerRef.current.setMap(null);
       }
       if (directionsRendererRef.current) {
         directionsRendererRef.current.setMap(null);
       }
+      // Clear global functions
       delete window.showRoute;
       delete window.showDetails;
     };
-  }, []); // Empty dependency array - run only once on mount
+  }, []); // Empty dependency array to run only once
 
   // Enhanced "Move to Current Location" button with better performance
   const handleMoveToCurrentLocation = () => {

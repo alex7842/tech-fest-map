@@ -73,7 +73,7 @@ export const Departments = [
       description: 'Central library with study areas'
     },
     {
-      name: 'BOYS Hostel 2',
+      name: 'BOYS HOSTEL 2',
       position: { lat: 9.14876500396776, lng: 77.8271088098364 },
       category: 'hostel',
       description: 'Boys Hostel 2'

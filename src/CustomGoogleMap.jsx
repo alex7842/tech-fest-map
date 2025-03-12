@@ -239,8 +239,13 @@ export const CustomGoogleMap = () => {
           if (name.includes('Mechanical')) return 'MECH';
           if (name.includes('Civil')) return 'CIVIL';
         } else if (category === 'hostel') {
+
           if (name.includes('BOYS HOSTEL 1')) return 'Boys Hostel 1';
           if(name.includes('BOYS HOSTEL 2')) return 'Boys Hostel 2';
+
+          if (name.includes('Boys Hostel 1')) return 'Boys Hostel 1';
+          if(name.includes('Boys Hostel 2')) return 'Boys Hostel 2';
+
           if (name.includes('Girls')) return 'Girls Hostel';
         } else if (category === 'facility') {
           return 'Library';

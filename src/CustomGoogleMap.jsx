@@ -218,6 +218,19 @@ export const CustomGoogleMap = () => {
               scaledSize: new window.google.maps.Size(40, 40),
               labelOrigin: new window.google.maps.Point(15, -10)
             };
+          case 'parking':
+            return {
+              url: `/parking2.png`,
+              scaledSize: new window.google.maps.Size(40, 40),
+              labelOrigin: new window.google.maps.Point(15, -10)
+            };
+            case 'foodstall':
+              return {
+                url: `/food1.png`,
+                scaledSize: new window.google.maps.Size(40, 40),
+                labelOrigin: new window.google.maps.Point(15, -10)
+              };
+
           default:
             return {
               url: `/restaurant.png`,
@@ -250,10 +263,17 @@ export const CustomGoogleMap = () => {
         } else if (category === 'facility') {
           return 'Library';
         }
+        else if (category==="parking"){
+          return 'Parking';
+        }
         else if (category === 'entrance') {
             return 'Entrance';
           
-        } else if (category === 'canteen') {
+        }
+        else if (category === 'foodstall') {
+          return 'Food Stall';
+        
+      } else if (category === 'canteen') {
           return 'Canteen';
         }
         return '';

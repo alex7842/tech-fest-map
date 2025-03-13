@@ -93,5 +93,50 @@ export const Departments = [
       position: { lat: 9.148280077767497, lng: 77.83221497408572 },
       category: 'academic',
       description: 'S&H Block'
+    },
+    {
+      name: 'Parking Area',
+
+
+      position: { lat:9.149271, lng: 77.832551 },
+      category: 'parking',
+      description: 'Bike and car parking area'
+    },
+    {
+      name: 'Food Stall',
+
+      
+      position: { lat:9.1467973, lng: 77.8310403},
+      category: 'foodstall',
+      description: 'Food Stall 🍔🍷'
+    },
+    {
+     
+      name: 'Food Stall',
+
+      
+      position: { lat:  9.147508, lng: 77.831109
+      },
+      category: 'foodstall',
+      description: 'Food Stall 🍔🍷'
+    },
+    {
+       
+      name: 'Food Stall',
+
+  
+      position: { lat:  9.147831, lng: 77.832058},
+      category: 'foodstall',
+      description: 'Food Stall 🍔🍷'
+    },
+    {
+      //cur
+      name: 'Food Stall',
+
+    
+      position: { lat: 9.148737, lng:  77.831352},
+      category: 'foodstall',
+      description: 'Food Stall 🍔🍷'
     }
+
   ];
